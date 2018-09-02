@@ -26,7 +26,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:fontFamily="@font/officina_book"
         android:paddingTop="@dimen/padding_normal"
         android:text="@string/scanning"
         app:layout_constraintStart_toStartOf="parent"

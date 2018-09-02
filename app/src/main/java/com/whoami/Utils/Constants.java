@@ -10,5 +10,4 @@ public class Constants {
     public final static String person_group_id = "mnc-person-group-id";
     public final static String person_id = "person-id";
     public final static String FACE = "face";
-    public final static String USER_DATA = "user_data";
 }

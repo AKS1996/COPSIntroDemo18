@@ -14,10 +14,9 @@ import com.whoami.helpers.ImageHelper;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity{
 
     @BindView(R.id.CameraImageButton)    ImageView cameraButton;
-    @BindView(R.id.HowToMain) Button howToTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,19 +26,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         new ImageHelper(MainActivity.this);
 
-        cameraButton.setOnClickListener(this);
-        howToTextView.setOnClickListener(this);
-    }
-
-    public void onClick(View view){
-        switch (view.getId()){
-            case R.id.CameraImageButton:
-                startActivity(new Intent(MainActivity.this,IdentifyActivity.class));
-                break;
-            case R.id.HowToMain:
-                // TODO Add HowTo Description
-                Toast.makeText(getApplicationContext(),"Added soon",Toast.LENGTH_LONG).show();
-                break;
-        }
+        cameraButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (v.getId() ==  R.id.CameraImageButton)
+                    startActivity(new Intent(MainActivity.this,IdentifyActivity.class));
+            }
+        });
     }
 }
