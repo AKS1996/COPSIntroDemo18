@@ -8,16 +8,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.AddPersistedFaceResult;
 import com.microsoft.projectoxford.face.contract.CreatePersonResult;
 import com.microsoft.projectoxford.face.contract.Face;
-import com.whoami.Models.Student;
 import com.whoami.R;
 import com.whoami.helpers.Auth;
 import com.whoami.helpers.GsonHelper;
@@ -38,9 +36,10 @@ public class AddActivity extends AppCompatActivity {
     private static Face face;
     private static ByteArrayOutputStream outputStream;
     private FaceServiceClient faceServiceClient;
-    private Student student;
+    private String studentName;
 
-    @BindView(R.id.ImageButtonAddActivity) ImageButton submitButton;
+    @BindView(R.id.EditTextAddActivity)    EditText name;
+    @BindView(R.id.ImageButtonAddActivity)    Button submitButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,32 +60,18 @@ public class AddActivity extends AppCompatActivity {
 
         }catch (Exception e){e.printStackTrace();}
 
-        final IntentIntegrator i =new IntentIntegrator(this);
-        i.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-        i.setOrientationLocked(true);
-        i.setBeepEnabled(true);
-        i.setPrompt("Scan a QR Code");
-
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                i.initiateScan();
+                if (name.getText().toString().matches(""))
+                    name.setError("Name can't be empty");
+                else{
+                    studentName = name.getText().toString();
+                    createPerson();
+                }
             }
         });
 
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if(result != null && resultCode == RESULT_OK && result.getContents().length() > 30
-                && result.getContents().contains("uid")
-                && result.getContents().contains("yob")) { // safe size check
-            student = new Student(result.getContents());
-            createPerson();
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
     }
 
     private void createPerson(){
@@ -98,8 +83,8 @@ public class AddActivity extends AppCompatActivity {
                 try {
                     person = faceServiceClient.createPerson(
                             person_group_id,
-                            student.getName(),         // person name
-                            student.getUserData()       // person data
+                            studentName,         // person name
+                            studentName       // person data
                     );
                 }catch (Exception e){
                     e.printStackTrace();
@@ -134,7 +119,7 @@ public class AddActivity extends AppCompatActivity {
                             person_group_id,
                             person.personId,
                             new ByteArrayInputStream(outputStream.toByteArray()),
-                            student.getUserData(), // Person data
+                            studentName, // Person data
                             face.faceRectangle
                     );
 

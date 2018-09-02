@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -349,12 +350,9 @@ public class IdentifyActivity extends AppCompatActivity {
             @Override
             protected void thenDoUiRelatedWork(Person person){
                 // U reached here means the u got the data just display
-
-                Intent intent = new Intent(IdentifyActivity.this,ResultActivity.class);
-                intent.putExtra(USER_DATA,person.userData);
-                startActivity(intent);
-
-                finish();
+                Snackbar
+                        .make(findViewById(R.id.IdentifyActivityCanvas),person.name,Snackbar.LENGTH_LONG)
+                        .show();
             }
         });
     }
