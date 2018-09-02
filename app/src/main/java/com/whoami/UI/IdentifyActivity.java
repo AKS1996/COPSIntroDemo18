@@ -1,6 +1,7 @@
 package com.whoami.UI;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,12 +21,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.microsoft.projectoxford.face.*;
 import com.microsoft.projectoxford.face.contract.*;
 import com.whoami.R;
 import com.whoami.Utils.Constants;
 import com.whoami.helpers.Auth;
 import com.whoami.helpers.GsonHelper;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,6 +44,11 @@ import java.util.UUID;
 
 import needle.Needle;
 import needle.UiRelatedTask;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static com.whoami.Utils.Constants.*;
 import static com.whoami.helpers.ImageHelper.*;
@@ -261,7 +273,7 @@ public class IdentifyActivity extends AppCompatActivity {
                 if (faces != null && faces.length > 0){
                     imageView.setImageBitmap(drawFaceRectanglesOnBitmap(imageBitmap, faces));
                     imageBitmap.recycle();
-                    getTrainingStatus(faces);
+                    getIdentity(faces);
                 }else {
                     Toast.makeText(IdentifyActivity.this, "No Face Detected", Toast.LENGTH_LONG).show();
                     description.setText("Face Detection Failed");
@@ -270,47 +282,13 @@ public class IdentifyActivity extends AppCompatActivity {
         });
     }
 
-    private void getTrainingStatus(final Face[] faces){
-        Needle.onBackgroundThread().execute(new UiRelatedTask<TrainingStatus>() {
-
-            @Override
-            protected TrainingStatus doWork(){
-                TrainingStatus status;
-                try {
-                    status = faceServiceClient.getPersonGroupTrainingStatus(person_group_id);
-                }catch (Exception e){
-                    e.printStackTrace();
-                    return null;
-                }
-                return status;
-            }
-
-            @Override
-            protected void thenDoUiRelatedWork(TrainingStatus status){
-                if (status==null)
-                    askHimToAdd(faces[0]);
-
-                else if (status.status.name().equals("Succeeded"))
-                    getIdentity(faces);
-                else if (status.message.equals("There is no person in group "+person_group_id))
-                    askHimToAdd(faces[0]);
-                else{
-                    description.setText("Try After some time");
-                    Toast.makeText(IdentifyActivity.this, "Training Going on. Try After some time", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-    }
-
     private void getIdentity(final Face[] faces){
-
         Needle.onBackgroundThread().execute(new UiRelatedTask<IdentifyResult[]>() {
             @Override
             protected IdentifyResult[] doWork(){
                 List<UUID> faceIds = new ArrayList<>();
-                for (Face face:  faces) {
+                for (Face face: faces)
                     faceIds.add(face.faceId);
-                }
 
                 IdentifyResult[] results = null;
                 try {
@@ -329,12 +307,55 @@ public class IdentifyActivity extends AppCompatActivity {
             @Override
             protected void thenDoUiRelatedWork(IdentifyResult[] results){
                 // Check whether the guys exists
-                if (results != null && results.length > 0 && !results[0].candidates.isEmpty()) {
-                    getPerson(results[0].candidates); // TODO Currently detecting only first face in a face list
+                // TODO Currently detecting only first face in a face list
+                String pid = results[0].candidates.get(0).personId.toString();
+                checkIfExists(faces, results, pid);
+            }
+        });
+    }
+
+    private void checkIfExists(final Face[] faces, final IdentifyResult[] results, final String pid){
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url("https://westcentralus.api.cognitive.microsoft.com/face/v1.0/persongroups/mnc-person-group-id/persons")
+                .get()
+                .addHeader("Ocp-Apim-Subscription-Key", "2bfcc78f3d3349789848ed4bb510ec85")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Cache-Control", "no-cache")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                boolean found = false;
+                try {
+                    JSONArray array = new JSONArray(response.body().string());
+                    for (int i = 0; i < array.length() && !found; ++i) {
+                        JSONObject object = (JSONObject) array.get(i);
+                        if (object.getString("personId").matches(pid))
+                            found = true;
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
+                if (found){
+                    getPerson(results[0].candidates);
                     Log.d("### Person ID",results[0].candidates.get(0).personId+"");
                 }
                 else
-                    askHimToAdd(faces[0]); // TODO Ask him to chose from the set of images
+                    Needle.onMainThread().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            askHimToAdd(faces[0]); // TODO Ask him to chose from the set of images
+                        }
+                    });
             }
         });
     }
