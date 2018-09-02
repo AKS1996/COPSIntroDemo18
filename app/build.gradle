@@ -38,4 +38,5 @@ dependencies {
     implementation 'com.journeyapps:zxing-android-embedded:3.5.0' // For QR Code
 
     implementation 'de.hdodenhof:circleimageview:2.2.0' // For circle image
+    implementation 'com.google.firebase:firebase-messaging:11.8.0'
 }
