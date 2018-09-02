@@ -40,3 +40,4 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:2.2.0' // For circle image
     implementation 'com.google.firebase:firebase-messaging:11.8.0'
 }
+apply plugin: 'com.google.gms.google-services'

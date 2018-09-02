@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.whoami.R;
 import com.whoami.helpers.ImageHelper;
 
@@ -24,6 +25,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        FirebaseMessaging.getInstance().subscribeToTopic("tawrun");
 
         new ImageHelper(MainActivity.this);
 

@@ -159,7 +159,7 @@ public class NotificationUtils {
     // Playing notification sound
     public void playNotificationSound() {
         try {
-            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Uri notification = Uri.parse("android.resource://com.whoami/raw/thuglife");
             Ringtone r = RingtoneManager.getRingtone(mContext, notification);
             r.play();
         } catch (Exception e) {
